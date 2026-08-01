@@ -1,0 +1,47 @@
+name: Microsoft Defender For DevOps
+
+on:
+  push:
+    branches:
+      - main
+      - beta
+
+  pull_request:
+    branches:
+      - main
+
+  schedule:
+    - cron: "19 23 * * 2"
+
+permissions:
+  contents: read
+  security-events: write
+  id-token: write
+
+jobs:
+  msdo:
+    name: Microsoft Security DevOps Scan
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            8.0.x
+
+      - name: Run Microsoft Security DevOps
+        id: msdo
+        uses: microsoft/security-devops-action@v1
+
+      - name: Upload SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.msdo.outputs.sarifFile }}
